@@ -1,14 +1,28 @@
 # Client Image Operations
 
-A simple game on a hex grid to teach basic math to a kid.
+A simple client interface to take a wide variety of image formats and get to common formats. The goal is to handle drag/drop and copy/paste from as many sources as possible. The end goal is a base64 image that can be downloaded.
 
-## Playing
+## Formats supported
 
-![Alt text](./docs/image.png)
+Formats:
 
-## New pieces - fade in
+- PNG
+- JPEG
+- HEIC - common for macOS images and iMessage
 
-![Alt text](./docs/image-1.png)
+## Import methods supports
+
+Methods:
+
+- Drag and drop
+  - Drag an image
+  - Drag an HTML element containing an image
+- Copy and paste
+  - Copy an image
+  - Copy an "image" from Teams
+  - Copy HTML containing a URL to an image
+- Import from text
+  - base64
 
 ## Stack
 
@@ -20,4 +34,3 @@ Contains:
 - TailwindCSS
 - Github actions to build pages
 - NextUI for components
-- Konva and react-konva to handle canvas interactions

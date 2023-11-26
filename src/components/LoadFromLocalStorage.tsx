@@ -7,19 +7,22 @@ import {
 } from "@nextui-org/react";
 import { useLocalStorage } from "react-use";
 
-type Props = {
-  decision: Decision;
+type Props<T> = {
+  decision: T;
 
-  onLoaded: (decision: Decision) => void;
+  onLoaded: (decision: T) => void;
 };
 
-type SavedDecision = {
+type SavedDecision<T> = {
   name: string;
-  decision: Decision;
+  decision: T;
 };
 
-export default function LoadFromLocalStorage({ decision, onLoaded }: Props) {
-  const [value = [], setValue, remove] = useLocalStorage<SavedDecision[]>(
+export default function LoadFromLocalStorage<T>({
+  decision,
+  onLoaded,
+}: Props<T>) {
+  const [value = [], setValue, remove] = useLocalStorage<SavedDecision<T>[]>(
     "options",
     []
   );
