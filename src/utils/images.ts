@@ -6,7 +6,7 @@ const imgContainer = document.getElementById("imageContainer");
 async function extractBase64FromBlob(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result);
+    reader.onloadend = () => resolve(String(reader.result));
     reader.onerror = reject;
     reader.readAsDataURL(blob);
   });
