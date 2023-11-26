@@ -1,4 +1,4 @@
-# Hex Math
+# Client Image Operations
 
 A simple game on a hex grid to teach basic math to a kid.
 
