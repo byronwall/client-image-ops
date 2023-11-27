@@ -1,6 +1,4 @@
-const dropzone = document.getElementById("dropzone");
-const eventOutput = document.getElementById("eventOutput");
-const imgContainer = document.getElementById("imageContainer");
+import { type DragEvent } from "react";
 
 // Function to extract base64 data from a Blob
 async function extractBase64FromBlob(blob: Blob): Promise<string> {
@@ -12,34 +10,18 @@ async function extractBase64FromBlob(blob: Blob): Promise<string> {
   });
 }
 
-// Function to update the image in the container
-function updateImageContainer(
-  base64Data: string,
-  imageContainer?: HTMLElement | null
-) {
-  if (!imageContainer) {
-    return;
-  }
-
-  const imgElement = document.createElement("img");
-  imgElement.src = base64Data;
-
-  // Clear any previous content inside the container
-  imageContainer.innerHTML = "";
-
-  // Append the image to the container
-  imageContainer.appendChild(imgElement);
-}
-
-async function displayImageAsBase64(url: string) {
+async function displayImageAsBase64(url: string): Promise<string> {
   try {
     const response = await fetch(url);
     const blob = await response.blob();
     const base64Data = await extractBase64FromBlob(blob);
-    updateImageContainer(base64Data, imgContainer);
+
+    return base64Data;
   } catch (e) {
     console.error(e);
   }
+
+  return "";
 }
 
 type DropData = {
@@ -90,23 +72,28 @@ function extractDropData(event: DragEvent) {
   return result;
 }
 
-async function handleDropEvent(e: DragEvent) {
+export async function handleDropEvent(e: DragEvent): Promise<{
+  base64Data: string;
+  dropData: DropData;
+} | void> {
+  if (e.dataTransfer === null) {
+    return;
+  }
   e.stopPropagation();
   e.preventDefault();
 
-  if (eventOutput === null) {
-    return;
-  }
-
+  //TODO: return the dropData too
   const dropData = extractDropData(e);
-  eventOutput.textContent = JSON.stringify(dropData, null, 2);
+
+  console.log(dropData);
 
   if (dropData.files.length > 0) {
     const file = dropData.files[0];
 
     if (file.type.startsWith("image/")) {
       const base64Data = await extractBase64FromBlob(file);
-      updateImageContainer(base64Data);
+
+      return { base64Data, dropData };
     } else {
       console.error("Not an image file");
     }
@@ -124,6 +111,85 @@ async function handleDropEvent(e: DragEvent) {
     }
 
     const imageUrl = imgTag.src;
-    displayImageAsBase64(imageUrl);
+    return { base64Data: await displayImageAsBase64(imageUrl), dropData };
   }
+}
+
+export async function handlePasteEvent(e: ClipboardEvent): Promise<{
+  base64Data: string;
+  dropData: DropData;
+} | void> {
+  if (e.clipboardData === null) {
+    return;
+  }
+  e.stopPropagation();
+  e.preventDefault();
+
+  const dropData = extractPasteData(e.clipboardData); // Assuming this function exists
+
+  console.log(dropData);
+
+  if (dropData.files.length > 0) {
+    const file = dropData.files[0];
+
+    if (file.type.startsWith("image/")) {
+      const base64Data = await extractBase64FromBlob(file);
+
+      return { base64Data, dropData };
+    } else {
+      console.error("Not an image file");
+    }
+  } else if (dropData.customData["text/html"]) {
+    const parser = new DOMParser();
+    const htmlDoc = parser.parseFromString(
+      dropData.customData["text/html"],
+      "text/html"
+    );
+    const imgTag = htmlDoc.querySelector("img");
+
+    if (imgTag === null) {
+      console.error("No image tag found");
+      return;
+    }
+
+    const imageUrl = imgTag.src;
+    return { base64Data: await displayImageAsBase64(imageUrl), dropData };
+  }
+}
+
+function extractPasteData(clipboardData: DataTransfer): DropData {
+  const result: DropData = {
+    files: [],
+    text: null,
+    url: null,
+    customData: {},
+  };
+
+  // Extract files if present
+  if (clipboardData.files.length > 0) {
+    for (let i = 0; i < clipboardData.files.length; i++) {
+      result.files.push(clipboardData.files[i]);
+    }
+  }
+
+  // Extract text data if present
+  const textData = clipboardData.getData("text/plain");
+  if (textData) {
+    result.text = textData;
+  }
+
+  // Extract URL if present
+  const urlData = clipboardData.getData("text/uri-list");
+  if (urlData) {
+    result.url = urlData;
+  }
+
+  // Extract any custom data based on available types
+  for (const type of clipboardData.types) {
+    if (type !== "Files" && type !== "text/plain" && type !== "text/uri-list") {
+      result.customData[type] = clipboardData.getData(type);
+    }
+  }
+
+  return result;
 }
