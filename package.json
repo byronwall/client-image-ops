@@ -11,10 +11,14 @@
   },
   "dependencies": {
     "@nextui-org/react": "^2.2.1",
+    "@types/heic-convert": "^1.2.3",
     "clsx": "^2.0.0",
     "eslint-plugin-react": "^7.33.2",
     "framer-motion": "^10.16.4",
+    "heic-convert": "^2.0.0",
+    "heic2any": "^0.0.4",
     "immer": "^10.0.3",
+    "libheif-js": "^1.17.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-use": "^17.4.0",
@@ -23,6 +27,8 @@
   },
   "devDependencies": {
     "@dword-design/eslint-plugin-import-alias": "^4.0.8",
+    "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
+    "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
     "@typescript-eslint/eslint-plugin": "^6.0.0",

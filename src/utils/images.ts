@@ -1,4 +1,6 @@
 import { type DragEvent } from "react";
+import heic2any from "heic2any";
+import libheif from "libheif-js";
 
 // Function to extract base64 data from a Blob
 async function extractBase64FromBlob(blob: Blob): Promise<string> {
@@ -90,6 +92,13 @@ export async function handleDropEvent(e: DragEvent): Promise<{
   if (dropData.files.length > 0) {
     const file = dropData.files[0];
 
+    if (file.type === "image/heic") {
+      console.log("heic file");
+      const base64Heic = await extractBase64FromBlob(file);
+      const base64Data = await convertHEICToPNG(base64Heic);
+      return { base64Data, dropData };
+    }
+
     if (file.type.startsWith("image/")) {
       const base64Data = await extractBase64FromBlob(file);
 
@@ -131,6 +140,15 @@ export async function handlePasteEvent(e: ClipboardEvent): Promise<{
 
   if (dropData.files.length > 0) {
     const file = dropData.files[0];
+
+    console.log(file.type);
+
+    if (file.type === "image/heic") {
+      console.log("heic file");
+      const base64Heic = await extractBase64FromBlob(file);
+      const base64Data = await convertHEICToPNG(base64Heic);
+      return { base64Data, dropData };
+    }
 
     if (file.type.startsWith("image/")) {
       const base64Data = await extractBase64FromBlob(file);
@@ -192,4 +210,54 @@ function extractPasteData(clipboardData: DataTransfer): DropData {
   }
 
   return result;
+}
+
+async function convertHEICToPNG(base64Data: string) {
+  console.log(libheif);
+  console.log("base64Data", base64Data);
+  const decoder = new (libheif as any).HeifDecoder();
+
+  const dataWithoutPrefix = base64Data.split(",")[1];
+
+  // convert base64 to array buffer
+
+  const arrayBuffer = convertBase64ToArrayBuffer(dataWithoutPrefix);
+
+  const uint8Array = new Uint8Array(arrayBuffer);
+
+  // from buffer
+  const blob = new Blob([uint8Array], { type: "image/heic" });
+
+  console.log(uint8Array);
+
+  const data = decoder.decode(uint8Array);
+
+  //   // Step 1: Read the HEIC File
+
+  let pngBlob = await heic2any({
+    blob: blob,
+    toType: "image/png",
+    quality: 0.8, // Optional: Adjust the quality
+  });
+
+  // get singel if array
+  if (Array.isArray(pngBlob)) {
+    pngBlob = pngBlob[0];
+  }
+
+  // convert array buffer to blob
+  const pngBlobBuf = new Blob([pngBlob], { type: "image/png" });
+
+  // return base 64 data
+  return extractBase64FromBlob(pngBlobBuf);
+}
+
+function convertBase64ToArrayBuffer(base64: string) {
+  const binary_string = window.atob(base64);
+  const len = binary_string.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binary_string.charCodeAt(i);
+  }
+  return bytes.buffer;
 }
