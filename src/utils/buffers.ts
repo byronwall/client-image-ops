@@ -1,4 +1,4 @@
-export function convertBase64ToNodeBuffer(base64: string): Uint8Array {
+export function convertBase64ToUInt8Array(base64: string): Uint8Array {
   // this is basically a node buffer
   // can get an array buffer with bytes.buffer
   // remove data:image/jpeg;base64, from base64 string if present
