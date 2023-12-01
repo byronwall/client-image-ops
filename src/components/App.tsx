@@ -1,11 +1,11 @@
 import { type DragEvent, useState } from "react";
 
 import { cn } from "~/utils/classes";
-import { handleDropEvent, handlePasteEvent } from "~/utils/images";
+import { handleDropEvent, handlePasteEvent } from "~/utils/image/images";
+
+import { Spinner } from "./ui/Spinner";
 
 const App = () => {
-  // TODO: need to handle paste event
-
   const [inputType, setInputType] = useState<"drop" | "paste" | undefined>(
     undefined
   );
@@ -13,6 +13,8 @@ const App = () => {
   const [base64data, setBase64data] = useState<string | undefined>(undefined);
 
   const [inputData, setInputData] = useState<any | undefined>(undefined);
+
+  const [isLoading, setIsLoading] = useState(false);
 
   const [isDragActive, setIsDragActive] = useState(false);
 
@@ -27,6 +29,8 @@ const App = () => {
     ev.preventDefault();
     ev.stopPropagation();
 
+    setIsLoading(true);
+
     setInputType("drop");
     setIsDragActive(false);
 
@@ -39,6 +43,7 @@ const App = () => {
 
     setBase64data(base64Data);
     setInputData(dropData);
+    setIsLoading(false);
   };
 
   const handlePaste = async (ev: any) => {
@@ -46,6 +51,7 @@ const App = () => {
     ev.stopPropagation();
 
     setInputType("paste");
+    setIsLoading(true);
 
     const res = await handlePasteEvent(ev as ClipboardEvent);
     if (!res) {
@@ -56,6 +62,7 @@ const App = () => {
 
     setBase64data(base64Data);
     setInputData(dropData);
+    setIsLoading(false);
   };
 
   return (
@@ -87,15 +94,11 @@ const App = () => {
             {inputType === "drop" && <p>drop</p>}
             {inputType === "paste" && <p>paste</p>}
             {inputType === undefined && <p>paste or drop to start!</p>}
-            {inputData && (
-              <pre className="overflow-hidden break-all whitespace-pre-wrap">
-                {JSON.stringify(inputData)}
-              </pre>
-            )}
+            {isLoading && <Spinner />}
           </div>
           <div className="w-80 h-80 bg-gray-300 border-4 border-gray-500 rounded-lg">
             <p>raw image</p>
-            <pre className="truncate">{base64data}</pre>
+
             {base64data && (
               <img src={base64data} alt="output" height={260} width={260} />
             )}

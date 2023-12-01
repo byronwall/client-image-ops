@@ -1,6 +1,5 @@
 import { type DragEvent } from "react";
 import heic2any from "heic2any";
-import libheif from "libheif-js";
 
 // Function to extract base64 data from a Blob
 async function extractBase64FromBlob(blob: Blob): Promise<string> {
@@ -213,26 +212,10 @@ function extractPasteData(clipboardData: DataTransfer): DropData {
 }
 
 async function convertHEICToPNG(base64Data: string) {
-  console.log(libheif);
-  console.log("base64Data", base64Data);
-  const decoder = new (libheif as any).HeifDecoder();
-
-  const dataWithoutPrefix = base64Data.split(",")[1];
-
-  // convert base64 to array buffer
-
-  const arrayBuffer = convertBase64ToArrayBuffer(dataWithoutPrefix);
-
-  const uint8Array = new Uint8Array(arrayBuffer);
+  const uint8Array = convertBase64ToNodeBuffer(base64Data);
 
   // from buffer
   const blob = new Blob([uint8Array], { type: "image/heic" });
-
-  console.log(uint8Array);
-
-  const data = decoder.decode(uint8Array);
-
-  //   // Step 1: Read the HEIC File
 
   let pngBlob = await heic2any({
     blob: blob,
@@ -240,24 +223,30 @@ async function convertHEICToPNG(base64Data: string) {
     quality: 0.8, // Optional: Adjust the quality
   });
 
-  // get singel if array
+  // get single png blob
   if (Array.isArray(pngBlob)) {
     pngBlob = pngBlob[0];
   }
 
-  // convert array buffer to blob
-  const pngBlobBuf = new Blob([pngBlob], { type: "image/png" });
-
   // return base 64 data
-  return extractBase64FromBlob(pngBlobBuf);
+  return extractBase64FromBlob(pngBlob);
 }
 
-function convertBase64ToArrayBuffer(base64: string) {
+function convertBase64ToNodeBuffer(base64: string): Uint8Array {
+  // this is basically a node buffer
+  // can get an array buffer with bytes.buffer
+
+  // remove data:image/jpeg;base64, from base64 string if present
+  if (base64.startsWith("data:")) {
+    base64 = base64.split(",")[1];
+  }
+
   const binary_string = window.atob(base64);
   const len = binary_string.length;
   const bytes = new Uint8Array(len);
   for (let i = 0; i < len; i++) {
     bytes[i] = binary_string.charCodeAt(i);
   }
-  return bytes.buffer;
+
+  return bytes;
 }
