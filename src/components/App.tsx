@@ -1,7 +1,7 @@
 import { type DragEvent, useState } from "react";
 
 import { cn } from "~/utils/classes";
-import { handleDropEvent, handlePasteEvent } from "~/utils/image/images";
+import { handleEventWithData } from "~/utils/events";
 
 import { Spinner } from "./ui/Spinner";
 
@@ -26,15 +26,12 @@ const App = () => {
   };
 
   const handleDrop = async (ev: DragEvent) => {
-    ev.preventDefault();
-    ev.stopPropagation();
-
     setIsLoading(true);
 
     setInputType("drop");
     setIsDragActive(false);
 
-    const res = await handleDropEvent(ev as DragEvent);
+    const res = await handleEventWithData(ev as DragEvent);
     if (!res) {
       return;
     }
@@ -47,13 +44,10 @@ const App = () => {
   };
 
   const handlePaste = async (ev: any) => {
-    ev.preventDefault();
-    ev.stopPropagation();
-
     setInputType("paste");
     setIsLoading(true);
 
-    const res = await handlePasteEvent(ev as ClipboardEvent);
+    const res = await handleEventWithData(ev as ClipboardEvent);
     if (!res) {
       return;
     }
