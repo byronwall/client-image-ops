@@ -1,7 +1,8 @@
-import { type DragEvent, useState } from "react";
+import { type DragEvent, useState, useEffect } from "react";
 
 import { cn } from "~/utils/classes";
 import { handleEventWithData } from "~/utils/events";
+import { downloadBase64File } from "~/utils/buffers";
 
 import { Spinner } from "./ui/Spinner";
 
@@ -59,6 +60,36 @@ const App = () => {
     setIsLoading(false);
   };
 
+  const [base64Png, setBase64Png] = useState<string | undefined>(undefined);
+  const [base64Jpg, setBase64Jpg] = useState<string | undefined>(undefined);
+  const [base64Webp, setBase64Webp] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (!base64data) {
+      return;
+    }
+
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    const img = new Image();
+    img.src = base64data;
+    img.onload = () => {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx?.drawImage(img, 0, 0);
+
+      const pngBase64 = canvas.toDataURL(`image/png`);
+      setBase64Png(pngBase64);
+
+      const jpgBase64 = canvas.toDataURL(`image/jpeg`);
+      setBase64Jpg(jpgBase64);
+
+      const webpBase64 = canvas.toDataURL(`image/webp`);
+      setBase64Webp(webpBase64);
+    };
+  }, [base64data]);
+
   return (
     <div
       className="relative  "
@@ -90,15 +121,54 @@ const App = () => {
             {inputType === undefined && <p>paste or drop to start!</p>}
             {isLoading && <Spinner />}
           </div>
-          <div className="w-80 h-80 bg-gray-300 border-4 border-gray-500 rounded-lg">
+          <div className="w-80 bg-gray-300 border-4 border-gray-500 rounded-lg">
             <p>raw image</p>
+            <p>file type: {base64data?.split(";")[0].split("/")[1]}</p>
+            <p>size [KB]: {Math.round((base64data?.length || 0) / 1024)}</p>
 
             {base64data && (
               <img src={base64data} alt="output" height={260} width={260} />
             )}
           </div>
-          <div className="w-80 h-80 bg-gray-300 border-4 border-gray-500 rounded-lg">
-            output
+          <div className="bg-gray-300 border-4 border-gray-500 rounded-lg">
+            {/* get the size in KB */}
+            {base64Png && (
+              <div>
+                <p>png [{Math.round((base64Png.length * 3) / 4 / 1024)} KB]</p>
+                <button
+                  onClick={() => downloadBase64File(base64Png, "output.png")}
+                >
+                  download
+                </button>
+                <img src={base64Png} alt="output" height={260} width={260} />
+              </div>
+            )}
+
+            {base64Jpg && (
+              <div>
+                <p>jpg [{Math.round((base64Jpg.length * 3) / 4 / 1024)} KB]</p>
+                <button
+                  onClick={() => downloadBase64File(base64Jpg, "output.jpg")}
+                >
+                  download
+                </button>
+                <img src={base64Jpg} alt="output" height={260} width={260} />
+              </div>
+            )}
+
+            {base64Webp && (
+              <div>
+                <p>
+                  webp [{Math.round((base64Webp.length * 3) / 4 / 1024)} KB]
+                </p>
+                <button
+                  onClick={() => downloadBase64File(base64Webp, "output.webp")}
+                >
+                  download
+                </button>
+                <img src={base64Webp} alt="output" height={260} width={260} />
+              </div>
+            )}
           </div>
         </div>
       </div>
