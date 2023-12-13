@@ -1,11 +1,9 @@
 import heic2any from "heic2any";
 
-import { extractBase64FromBlob, convertBase64ToUInt8Array } from "./buffers";
+import { extractBase64FromBlob, createBlobFromBase64 } from "./buffers";
 
 export async function convertHEICToPNG(base64Data: string) {
-  const uint8Array = convertBase64ToUInt8Array(base64Data);
-
-  const blob = new Blob([uint8Array], { type: "image/heic" });
+  const blob = createBlobFromBase64(base64Data, "image/heic");
 
   let pngBlob = await heic2any({
     blob: blob,

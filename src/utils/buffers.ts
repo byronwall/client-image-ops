@@ -26,3 +26,24 @@ export async function extractBase64FromBlob(blob: Blob): Promise<string> {
     reader.readAsDataURL(blob);
   });
 }
+export function createBlobFromBase64(base64Data: string, mimeType?: string) {
+  const uint8Array = convertBase64ToUInt8Array(base64Data);
+
+  if (!mimeType) {
+    mimeType = base64Data.split(",")[0].split(":")[1].split(";")[0];
+  }
+
+  const blob = new Blob([uint8Array], { type: mimeType });
+  return blob;
+}
+
+export function downloadBase64File(base64Data: string, fileName: string) {
+  const blob = createBlobFromBase64(base64Data);
+
+  const anchor = document.createElement("a");
+  const url = window.URL.createObjectURL(blob);
+
+  anchor.href = url;
+  anchor.download = fileName;
+  anchor.click();
+}
