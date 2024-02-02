@@ -5,11 +5,10 @@ import { handleEventWithData } from "~/utils/events";
 
 import { Spinner } from "./ui/Spinner";
 import { ImageHelper } from "./ImageHelper";
+import { S3StorageSettings } from "./S3StorageSettings";
 
 const App = () => {
   const [base64data, setBase64data] = useState<string | undefined>(undefined);
-
-  const [inputData, setInputData] = useState<any | undefined>(undefined);
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -32,14 +31,19 @@ const App = () => {
       return;
     }
 
-    const { base64Data, dropData } = res;
+    const { base64Data } = res;
 
     setBase64data(base64Data);
-    setInputData(dropData);
+
     setIsLoading(false);
   };
 
   const handlePaste = async (ev: any) => {
+    // kick out if input
+    if (ev.target.tagName === "INPUT") {
+      return;
+    }
+
     setIsLoading(true);
 
     const res = await handleEventWithData(ev as ClipboardEvent);
@@ -47,10 +51,10 @@ const App = () => {
       return;
     }
 
-    const { base64Data, dropData } = res;
+    const { base64Data } = res;
 
     setBase64data(base64Data);
-    setInputData(dropData);
+
     setIsLoading(false);
   };
 
@@ -104,7 +108,7 @@ const App = () => {
       <div className="flex flex-col items-center  min-h-screen gap-4  p-2">
         <h1 className="text-4xl font-bold">Image Converter</h1>
 
-        <div className="flex flex-col items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
           <div className="w-80 p-2  bg-gray-300 border-4 border-gray-500 rounded-lg">
             {isLoading && <Spinner />}
 
@@ -118,6 +122,8 @@ const App = () => {
             <ImageHelper base64Webp={base64Jpg} />
             <ImageHelper base64Webp={base64Webp} />
           </div>
+
+          <S3StorageSettings />
         </div>
       </div>
     </div>
