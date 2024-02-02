@@ -2,15 +2,11 @@ import { type DragEvent, useState, useEffect } from "react";
 
 import { cn } from "~/utils/classes";
 import { handleEventWithData } from "~/utils/events";
-import { downloadBase64File } from "~/utils/buffers";
 
 import { Spinner } from "./ui/Spinner";
+import { ImageHelper } from "./ImageHelper";
 
 const App = () => {
-  const [inputType, setInputType] = useState<"drop" | "paste" | undefined>(
-    undefined
-  );
-
   const [base64data, setBase64data] = useState<string | undefined>(undefined);
 
   const [inputData, setInputData] = useState<any | undefined>(undefined);
@@ -29,7 +25,6 @@ const App = () => {
   const handleDrop = async (ev: DragEvent) => {
     setIsLoading(true);
 
-    setInputType("drop");
     setIsDragActive(false);
 
     const res = await handleEventWithData(ev as DragEvent);
@@ -45,7 +40,6 @@ const App = () => {
   };
 
   const handlePaste = async (ev: any) => {
-    setInputType("paste");
     setIsLoading(true);
 
     const res = await handleEventWithData(ev as ClipboardEvent);
@@ -92,7 +86,7 @@ const App = () => {
 
   return (
     <div
-      className="relative  "
+      className="relative"
       onDragOver={handleDragOver}
       onDrop={handleDrop}
       onPaste={handlePaste}
@@ -107,68 +101,22 @@ const App = () => {
           )}
         ></div>
       </div>
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4 ">
+      <div className="flex flex-col items-center  min-h-screen gap-4  p-2">
         <h1 className="text-4xl font-bold">Image Converter</h1>
-        <p className="text-xl mt-4">
-          Paste an image or drop something containing an image here.
-        </p>
 
-        <div className="flex flex-wrap gap-4">
-          <div className="w-80 h-80 bg-gray-300 border-4 border-gray-500 rounded-lg">
-            <p>input</p>
-            {inputType === "drop" && <p>drop</p>}
-            {inputType === "paste" && <p>paste</p>}
-            {inputType === undefined && <p>paste or drop to start!</p>}
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-80 p-2  bg-gray-300 border-4 border-gray-500 rounded-lg">
             {isLoading && <Spinner />}
+
+            <p>input image (drop or paste)</p>
+
+            <ImageHelper base64Webp={base64data} />
           </div>
-          <div className="w-80 bg-gray-300 border-4 border-gray-500 rounded-lg">
-            <p>raw image</p>
-            <p>file type: {base64data?.split(";")[0].split("/")[1]}</p>
-            <p>size [KB]: {Math.round((base64data?.length || 0) / 1024)}</p>
 
-            {base64data && (
-              <img src={base64data} alt="output" height={260} width={260} />
-            )}
-          </div>
-          <div className="bg-gray-300 border-4 border-gray-500 rounded-lg">
-            {/* get the size in KB */}
-            {base64Png && (
-              <div>
-                <p>png [{Math.round((base64Png.length * 3) / 4 / 1024)} KB]</p>
-                <button
-                  onClick={() => downloadBase64File(base64Png, "output.png")}
-                >
-                  download
-                </button>
-                <img src={base64Png} alt="output" height={260} width={260} />
-              </div>
-            )}
-
-            {base64Jpg && (
-              <div>
-                <p>jpg [{Math.round((base64Jpg.length * 3) / 4 / 1024)} KB]</p>
-                <button
-                  onClick={() => downloadBase64File(base64Jpg, "output.jpg")}
-                >
-                  download
-                </button>
-                <img src={base64Jpg} alt="output" height={260} width={260} />
-              </div>
-            )}
-
-            {base64Webp && (
-              <div>
-                <p>
-                  webp [{Math.round((base64Webp.length * 3) / 4 / 1024)} KB]
-                </p>
-                <button
-                  onClick={() => downloadBase64File(base64Webp, "output.webp")}
-                >
-                  download
-                </button>
-                <img src={base64Webp} alt="output" height={260} width={260} />
-              </div>
-            )}
+          <div className="bg-gray-300 border-4 border-gray-500 rounded-lg flex gap-4">
+            <ImageHelper base64Webp={base64Png} />
+            <ImageHelper base64Webp={base64Jpg} />
+            <ImageHelper base64Webp={base64Webp} />
           </div>
         </div>
       </div>
