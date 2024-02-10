@@ -19,7 +19,7 @@ type WorkflowStepInputs = {
   options?: Record<string, any>;
 };
 
-type WorkflowStep = WorkflowStepInputs & {
+export type WorkflowStep = WorkflowStepInputs & {
   outputImages: WorkflowImage[];
 };
 
@@ -28,6 +28,7 @@ type WorkflowStoreActions = {
   setInputImage: (inputImage: Base64Image) => void;
 
   getImageById: (id: string) => WorkflowImage | undefined;
+  isNodeTerminal: (id: string) => boolean;
 };
 
 function getDumbId() {
@@ -39,6 +40,19 @@ export const useWorkflowStore = create<
 >((set, get) => ({
   inputImage: undefined,
   workflowSteps: [],
+
+  isNodeTerminal: (id) => {
+    const { workflowSteps } = get();
+
+    // if id is input and no steps exist then true
+    if (id === "root" && workflowSteps.length === 0) {
+      return true;
+    }
+
+    return workflowSteps.some((step) =>
+      step.outputImages.some((outputImage) => outputImage.id === id)
+    );
+  },
 
   setInputImage: (inputImage) => {
     set({

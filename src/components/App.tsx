@@ -1,12 +1,29 @@
-import { type DragEvent, useState, useEffect } from "react";
+import { type DragEvent, useState, useEffect, useMemo } from "react";
+import ReactFlow, {
+  MiniMap,
+  type Edge,
+  type Node,
+  Background,
+  Controls,
+  useNodesState,
+} from "reactflow";
+import { useMeasure } from "react-use";
 
 import { cn } from "~/utils/classes";
 import { handleEventWithData } from "~/utils/events";
-import { useWorkflowStore } from "~/stores/useWorkflowStore";
+import {
+  type WorkflowStep,
+  useWorkflowStore,
+  type WorkflowImage,
+} from "~/stores/useWorkflowStore";
 
-import { Spinner } from "./ui/Spinner";
-import { ImageHelper } from "./ImageHelper";
-import { S3StorageSettings } from "./S3StorageSettings";
+import CustomNode from "./CustomNode";
+
+import "reactflow/dist/style.css";
+
+const nodeTypes = {
+  custom: CustomNode,
+};
 
 const App = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -16,6 +33,37 @@ const App = () => {
   const inputImage = useWorkflowStore((s) => s.inputImage);
   const setBase64data = useWorkflowStore((s) => s.setInputImage);
   const workflowSteps = useWorkflowStore((s) => s.workflowSteps);
+
+  const { reactFlowEdges, reactFlowNodes } = useMemo(() => {
+    // convert the workflowSteps to a format that reactflow can understand
+    const reactFlowNodes: Node<WorkflowStep | WorkflowImage>[] =
+      workflowSteps.map((step, i) => ({
+        id: step.outputImages[0].id,
+        position: { x: 0, y: 250 * (i + 2) },
+        data: step,
+        type: "custom",
+      }));
+
+    // add in the input image too
+    if (inputImage) {
+      reactFlowNodes.unshift({
+        id: "root",
+        position: { x: 0, y: 0 },
+        data: inputImage,
+        type: "custom",
+      });
+    }
+
+    const reactFlowEdges: Edge[] = workflowSteps.map((step, i) => ({
+      id: `e${i + 1}-${i + 2}`,
+      source: step.inputId,
+      target: step.outputImages?.[0].id ?? "root",
+      animated: true,
+      style: { strokeWidth: 10 },
+    }));
+
+    return { reactFlowNodes, reactFlowEdges };
+  }, [inputImage, workflowSteps]);
 
   const base64Data = inputImage?.base64Data;
 
@@ -93,6 +141,14 @@ const App = () => {
     };
   }, [base64Data]);
 
+  const [ref, { width, height }] = useMeasure();
+
+  const [nodes, setNodes, onNodesChange] = useNodesState(reactFlowNodes);
+
+  useEffect(() => {
+    setNodes(reactFlowNodes);
+  }, [reactFlowNodes, setNodes]);
+
   return (
     <div
       className="relative"
@@ -113,36 +169,34 @@ const App = () => {
       <div className="flex flex-col items-center  min-h-screen gap-4  p-2">
         <h1 className="text-4xl font-bold">Image Converter</h1>
 
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="w-80 p-2  bg-gray-300 border-4 border-gray-500 rounded-lg">
-            {isLoading && <Spinner />}
-
-            <p>input image (drop or paste)</p>
-
-            <ImageHelper workflowImage={inputImage} />
-          </div>
-
-          {workflowSteps.map((step, i) => (
-            <div
-              key={i}
-              className="w-80 p-2  bg-gray-300 border-4 border-gray-500 rounded-lg"
+        <div
+          className="flex-1 self-stretch h-1  border rounded-lg"
+          ref={ref as any}
+        >
+          <div style={{ height, width }}>
+            <ReactFlow
+              nodes={nodes}
+              edges={reactFlowEdges}
+              nodeTypes={nodeTypes}
+              onNodesChange={onNodesChange}
+              fitView
             >
-              <p>{step.operation}</p>
-
-              {step.outputImages.map((outputImage) => (
-                <ImageHelper key={outputImage.id} workflowImage={outputImage} />
-              ))}
-            </div>
-          ))}
-
-          <div className="bg-gray-300 border-4 border-gray-500 rounded-lg flex gap-4">
-            <ImageHelper base64={base64Png} />
-            <ImageHelper base64={base64Jpg} />
-            <ImageHelper base64={base64Webp} />
+              <MiniMap
+                style={{
+                  height: 120,
+                }}
+                zoomable
+                pannable
+              />
+              <Controls />
+              <Background color="#aaa" gap={16} />
+            </ReactFlow>
           </div>
-
-          <S3StorageSettings />
         </div>
+
+        {/* <div className="flex flex-wrap items-center gap-4">
+          <S3StorageSettings />
+        </div> */}
       </div>
     </div>
   );

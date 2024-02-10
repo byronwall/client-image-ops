@@ -19,13 +19,14 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.50.0",
-    "react-use": "^17.4.0",
+    "react-use": "^17.5.0",
+    "reactflow": "^11.10.3",
     "tailwind-merge": "^2.0.0",
     "zustand": "^4.5.0"
   },
   "devDependencies": {
-    "@types/node": "^20.11.16",
     "@dword-design/eslint-plugin-import-alias": "^4.0.8",
+    "@types/node": "^20.11.16",
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
