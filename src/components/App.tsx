@@ -2,17 +2,22 @@ import { type DragEvent, useState, useEffect } from "react";
 
 import { cn } from "~/utils/classes";
 import { handleEventWithData } from "~/utils/events";
+import { useWorkflowStore } from "~/stores/useWorkflowStore";
 
 import { Spinner } from "./ui/Spinner";
 import { ImageHelper } from "./ImageHelper";
 import { S3StorageSettings } from "./S3StorageSettings";
 
 const App = () => {
-  const [base64data, setBase64data] = useState<string | undefined>(undefined);
-
   const [isLoading, setIsLoading] = useState(false);
 
   const [isDragActive, setIsDragActive] = useState(false);
+
+  const inputImage = useWorkflowStore((s) => s.inputImage);
+  const setBase64data = useWorkflowStore((s) => s.setInputImage);
+  const workflowSteps = useWorkflowStore((s) => s.workflowSteps);
+
+  const base64Data = inputImage?.base64Data;
 
   const handleDragOver = (ev: DragEvent) => {
     ev.preventDefault();
@@ -63,7 +68,7 @@ const App = () => {
   const [base64Webp, setBase64Webp] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    if (!base64data) {
+    if (!base64Data) {
       return;
     }
 
@@ -71,7 +76,7 @@ const App = () => {
     const ctx = canvas.getContext("2d");
 
     const img = new Image();
-    img.src = base64data;
+    img.src = base64Data;
     img.onload = () => {
       canvas.width = img.width;
       canvas.height = img.height;
@@ -86,7 +91,7 @@ const App = () => {
       const webpBase64 = canvas.toDataURL(`image/webp`);
       setBase64Webp(webpBase64);
     };
-  }, [base64data]);
+  }, [base64Data]);
 
   return (
     <div
@@ -114,13 +119,26 @@ const App = () => {
 
             <p>input image (drop or paste)</p>
 
-            <ImageHelper base64Webp={base64data} />
+            <ImageHelper workflowImage={inputImage} />
           </div>
 
+          {workflowSteps.map((step, i) => (
+            <div
+              key={i}
+              className="w-80 p-2  bg-gray-300 border-4 border-gray-500 rounded-lg"
+            >
+              <p>{step.operation}</p>
+
+              {step.outputImages.map((outputImage) => (
+                <ImageHelper key={outputImage.id} workflowImage={outputImage} />
+              ))}
+            </div>
+          ))}
+
           <div className="bg-gray-300 border-4 border-gray-500 rounded-lg flex gap-4">
-            <ImageHelper base64Webp={base64Png} />
-            <ImageHelper base64Webp={base64Jpg} />
-            <ImageHelper base64Webp={base64Webp} />
+            <ImageHelper base64={base64Png} />
+            <ImageHelper base64={base64Jpg} />
+            <ImageHelper base64={base64Webp} />
           </div>
 
           <S3StorageSettings />
