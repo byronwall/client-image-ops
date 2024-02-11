@@ -5,6 +5,7 @@ import {
   useWorkflowStore,
   type WorkflowImage,
 } from "~/stores/useWorkflowStore";
+import { workflowOperationList } from "~/stores/WorkflowOperations";
 import { downloadBase64File } from "~/utils/buffers";
 import { cn } from "~/utils/classes";
 
@@ -72,16 +73,19 @@ export function ImageHelper({ workflowImage }: ImageHelperProps) {
           </div>
 
           <div className="flex self-center border border-slate-500 rounded-lg gap-2 p-2">
-            <button
-              onClick={() => {
-                addWorkflowStep({
-                  inputId: workflowImage.id,
-                  operation: "grayscale",
-                });
-              }}
-            >
-              Grayscale
-            </button>
+            {workflowOperationList.map((operation) => (
+              <button
+                key={operation}
+                onClick={() => {
+                  addWorkflowStep({
+                    inputId: workflowImage.id,
+                    operation,
+                  });
+                }}
+              >
+                {operation}
+              </button>
+            ))}
           </div>
         </>
       )}
