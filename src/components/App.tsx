@@ -65,8 +65,6 @@ const App = () => {
     return { reactFlowNodes, reactFlowEdges };
   }, [inputImage, workflowSteps]);
 
-  const base64Data = inputImage?.base64Data;
-
   const handleDragOver = (ev: DragEvent) => {
     ev.preventDefault();
     ev.stopPropagation();
@@ -110,36 +108,6 @@ const App = () => {
 
     setIsLoading(false);
   };
-
-  const [base64Png, setBase64Png] = useState<string | undefined>(undefined);
-  const [base64Jpg, setBase64Jpg] = useState<string | undefined>(undefined);
-  const [base64Webp, setBase64Webp] = useState<string | undefined>(undefined);
-
-  useEffect(() => {
-    if (!base64Data) {
-      return;
-    }
-
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-
-    const img = new Image();
-    img.src = base64Data;
-    img.onload = () => {
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx?.drawImage(img, 0, 0);
-
-      const pngBase64 = canvas.toDataURL(`image/png`);
-      setBase64Png(pngBase64);
-
-      const jpgBase64 = canvas.toDataURL(`image/jpeg`);
-      setBase64Jpg(jpgBase64);
-
-      const webpBase64 = canvas.toDataURL(`image/webp`);
-      setBase64Webp(webpBase64);
-    };
-  }, [base64Data]);
 
   const [ref, { width, height }] = useMeasure();
 
