@@ -1,18 +1,69 @@
-import { type DragEvent, useState, useEffect } from "react";
+import { type DragEvent, useState, useEffect, useMemo } from "react";
+import ReactFlow, {
+  MiniMap,
+  type Edge,
+  type Node,
+  Background,
+  Controls,
+  useNodesState,
+} from "reactflow";
+import { useMeasure } from "react-use";
 
 import { cn } from "~/utils/classes";
 import { handleEventWithData } from "~/utils/events";
+import {
+  type WorkflowStep,
+  useWorkflowStore,
+  type WorkflowImage,
+} from "~/stores/useWorkflowStore";
 
-import { Spinner } from "./ui/Spinner";
-import { ImageHelper } from "./ImageHelper";
-import { S3StorageSettings } from "./S3StorageSettings";
+import CustomNode from "./CustomNode";
+
+import "reactflow/dist/style.css";
+
+const nodeTypes = {
+  custom: CustomNode,
+};
 
 const App = () => {
-  const [base64data, setBase64data] = useState<string | undefined>(undefined);
-
   const [isLoading, setIsLoading] = useState(false);
 
   const [isDragActive, setIsDragActive] = useState(false);
+
+  const inputImage = useWorkflowStore((s) => s.inputImage);
+  const setBase64data = useWorkflowStore((s) => s.setInputImage);
+  const workflowSteps = useWorkflowStore((s) => s.workflowSteps);
+
+  const { reactFlowEdges, reactFlowNodes } = useMemo(() => {
+    // convert the workflowSteps to a format that reactflow can understand
+    const reactFlowNodes: Node<WorkflowStep | WorkflowImage>[] =
+      workflowSteps.map((step, i) => ({
+        id: step.outputImages[0].id,
+        position: { x: 0, y: 250 * (i + 2) },
+        data: step,
+        type: "custom",
+      }));
+
+    // add in the input image too
+    if (inputImage) {
+      reactFlowNodes.unshift({
+        id: "root",
+        position: { x: 0, y: 0 },
+        data: inputImage,
+        type: "custom",
+      });
+    }
+
+    const reactFlowEdges: Edge[] = workflowSteps.map((step, i) => ({
+      id: `e${i + 1}-${i + 2}`,
+      source: step.inputId,
+      target: step.outputImages?.[0].id ?? "root",
+      animated: true,
+      style: { strokeWidth: 10 },
+    }));
+
+    return { reactFlowNodes, reactFlowEdges };
+  }, [inputImage, workflowSteps]);
 
   const handleDragOver = (ev: DragEvent) => {
     ev.preventDefault();
@@ -58,35 +109,13 @@ const App = () => {
     setIsLoading(false);
   };
 
-  const [base64Png, setBase64Png] = useState<string | undefined>(undefined);
-  const [base64Jpg, setBase64Jpg] = useState<string | undefined>(undefined);
-  const [base64Webp, setBase64Webp] = useState<string | undefined>(undefined);
+  const [ref, { width, height }] = useMeasure();
+
+  const [nodes, setNodes, onNodesChange] = useNodesState(reactFlowNodes);
 
   useEffect(() => {
-    if (!base64data) {
-      return;
-    }
-
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-
-    const img = new Image();
-    img.src = base64data;
-    img.onload = () => {
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx?.drawImage(img, 0, 0);
-
-      const pngBase64 = canvas.toDataURL(`image/png`);
-      setBase64Png(pngBase64);
-
-      const jpgBase64 = canvas.toDataURL(`image/jpeg`);
-      setBase64Jpg(jpgBase64);
-
-      const webpBase64 = canvas.toDataURL(`image/webp`);
-      setBase64Webp(webpBase64);
-    };
-  }, [base64data]);
+    setNodes(reactFlowNodes);
+  }, [reactFlowNodes, setNodes]);
 
   return (
     <div
@@ -108,23 +137,34 @@ const App = () => {
       <div className="flex flex-col items-center  min-h-screen gap-4  p-2">
         <h1 className="text-4xl font-bold">Image Converter</h1>
 
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="w-80 p-2  bg-gray-300 border-4 border-gray-500 rounded-lg">
-            {isLoading && <Spinner />}
-
-            <p>input image (drop or paste)</p>
-
-            <ImageHelper base64Webp={base64data} />
+        <div
+          className="flex-1 self-stretch h-1  border rounded-lg"
+          ref={ref as any}
+        >
+          <div style={{ height, width }}>
+            <ReactFlow
+              nodes={nodes}
+              edges={reactFlowEdges}
+              nodeTypes={nodeTypes}
+              onNodesChange={onNodesChange}
+              fitView
+            >
+              <MiniMap
+                style={{
+                  height: 120,
+                }}
+                zoomable
+                pannable
+              />
+              <Controls />
+              <Background color="#aaa" gap={16} />
+            </ReactFlow>
           </div>
-
-          <div className="bg-gray-300 border-4 border-gray-500 rounded-lg flex gap-4">
-            <ImageHelper base64Webp={base64Png} />
-            <ImageHelper base64Webp={base64Jpg} />
-            <ImageHelper base64Webp={base64Webp} />
-          </div>
-
-          <S3StorageSettings />
         </div>
+
+        {/* <div className="flex flex-wrap items-center gap-4">
+          <S3StorageSettings />
+        </div> */}
       </div>
     </div>
   );

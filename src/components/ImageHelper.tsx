@@ -1,14 +1,19 @@
 import { useState } from "react";
 
 import { useS3Storage } from "~/stores/useS3Storage";
+import {
+  useWorkflowStore,
+  type WorkflowImage,
+} from "~/stores/useWorkflowStore";
+import { workflowOperationList } from "~/stores/WorkflowOperations";
 import { downloadBase64File } from "~/utils/buffers";
 import { cn } from "~/utils/classes";
 
 interface ImageHelperProps {
-  base64Webp?: string;
+  workflowImage: WorkflowImage | undefined;
 }
 
-export function ImageHelper({ base64Webp }: ImageHelperProps) {
+export function ImageHelper({ workflowImage }: ImageHelperProps) {
   const getCanSaveImage = useS3Storage((s) => s.getCanSaveImage);
   const saveImage = useS3Storage((s) => s.saveImage);
 
@@ -16,27 +21,34 @@ export function ImageHelper({ base64Webp }: ImageHelperProps) {
     undefined
   );
 
-  if (!base64Webp) {
+  const addWorkflowStep = useWorkflowStore((s) => s.addWorkflowStep);
+  const isTerminal = useWorkflowStore((s) => s.isNodeTerminal);
+
+  const base64 = workflowImage?.base64Data;
+
+  if (!base64) {
     return null;
   }
 
-  const imageType = base64Webp.split(";")[0].split("/")[1];
+  const shouldShowButtons = isTerminal(workflowImage.id);
+
+  const imageType = base64.split(";")[0].split("/")[1];
 
   const handleSaveImage = async () => {
     // call the save, get the URL back, and then set it in the state
-    const url = await saveImage(base64Webp);
+    const url = await saveImage(base64);
 
     setPresignedUrl(url);
   };
 
   return (
-    <div className="p-2">
+    <div className="p-2 flex flex-col">
       <div className="flex gap-1">
         <p>
-          {imageType} [{Math.round((base64Webp.length * 3) / 4 / 1024)} KB]
+          {imageType} [{Math.round((base64.length * 3) / 4 / 1024)} KB]
         </p>
         <button
-          onClick={() => downloadBase64File(base64Webp, "output." + imageType)}
+          onClick={() => downloadBase64File(base64, "output." + imageType)}
         >
           download
         </button>
@@ -45,7 +57,7 @@ export function ImageHelper({ base64Webp }: ImageHelperProps) {
         )}
       </div>
       <img
-        src={presignedUrl || base64Webp}
+        src={presignedUrl || base64}
         alt="output"
         height={260}
         width={260}
@@ -53,6 +65,30 @@ export function ImageHelper({ base64Webp }: ImageHelperProps) {
           "border-4 border-green-500": presignedUrl !== undefined,
         })}
       />
+
+      {shouldShowButtons && (
+        <>
+          <div className="flex justify-center gap-2">
+            <div className="w-3 h-10 bg-slate-500"></div>
+          </div>
+
+          <div className="flex self-center border border-slate-500 rounded-lg gap-2 p-2">
+            {workflowOperationList.map((operation) => (
+              <button
+                key={operation}
+                onClick={() => {
+                  addWorkflowStep({
+                    inputId: workflowImage.id,
+                    operation,
+                  });
+                }}
+              >
+                {operation}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
