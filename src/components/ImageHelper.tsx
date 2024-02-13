@@ -42,37 +42,39 @@ export function ImageHelper({ workflowImage }: ImageHelperProps) {
   };
 
   return (
-    <div className="p-2 flex flex-col">
-      <div className="flex gap-1">
-        <p>
-          {imageType} [{Math.round((base64.length * 3) / 4 / 1024)} KB]
-        </p>
-        <button
-          onClick={() => downloadBase64File(base64, "output." + imageType)}
-        >
-          download
-        </button>
-        {getCanSaveImage() && presignedUrl === undefined && (
-          <button onClick={handleSaveImage}>get url</button>
-        )}
+    <div className="flex">
+      <div className="p-2 flex flex-col">
+        <div className="flex gap-1">
+          <p>
+            {imageType} [{Math.round((base64.length * 3) / 4 / 1024)} KB]
+          </p>
+          <button
+            onClick={() => downloadBase64File(base64, "output." + imageType)}
+          >
+            download
+          </button>
+          {getCanSaveImage() && presignedUrl === undefined && (
+            <button onClick={handleSaveImage}>get url</button>
+          )}
+        </div>
+        <img
+          src={presignedUrl || base64}
+          alt="output"
+          height={260}
+          width={260}
+          className={cn({
+            "border-4 border-green-500": presignedUrl !== undefined,
+          })}
+        />
       </div>
-      <img
-        src={presignedUrl || base64}
-        alt="output"
-        height={260}
-        width={260}
-        className={cn("rounded-lg", {
-          "border-4 border-green-500": presignedUrl !== undefined,
-        })}
-      />
 
       {shouldShowButtons && (
         <>
-          <div className="flex justify-center gap-2">
-            <div className="w-3 h-10 bg-slate-500"></div>
+          <div className="self-center flex justify-center ">
+            <div className="w-10 h-3 bg-slate-500"></div>
           </div>
 
-          <div className="flex self-center border border-slate-500 rounded-lg gap-2 p-2">
+          <div className="flex flex-col self-center border border-slate-500 rounded-lg gap-2 p-2">
             {workflowOperationList.map((operation) => (
               <button
                 key={operation}

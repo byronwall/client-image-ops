@@ -54,9 +54,14 @@ export const useWorkflowStore = create<
       return true;
     }
 
-    return workflowSteps.some((step) =>
-      step.outputImages.some((outputImage) => outputImage.id === id)
-    );
+    // find the node and see if it has an output image
+    for (const step of workflowSteps) {
+      if (step.inputId === id) {
+        return step.outputImages.length === 0;
+      }
+    }
+
+    return true;
   },
 
   setInputImage: (inputImage) => {

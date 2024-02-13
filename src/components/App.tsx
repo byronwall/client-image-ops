@@ -36,10 +36,11 @@ const App = () => {
 
   const { reactFlowEdges, reactFlowNodes } = useMemo(() => {
     // convert the workflowSteps to a format that reactflow can understand
+    // use a horizontal flow for now
     const reactFlowNodes: Node<WorkflowStep | WorkflowImage>[] =
       workflowSteps.map((step, i) => ({
         id: step.outputImages[0].id,
-        position: { x: 0, y: 250 * (i + 2) },
+        position: { x: 320 * (i + 1), y: 0 },
         data: step,
         type: "custom",
       }));
@@ -58,7 +59,7 @@ const App = () => {
       id: `e${i + 1}-${i + 2}`,
       source: step.inputId,
       target: step.outputImages?.[0].id ?? "root",
-      animated: true,
+      animated: false,
       style: { strokeWidth: 10 },
     }));
 
