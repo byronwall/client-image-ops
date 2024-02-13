@@ -54,18 +54,17 @@ export const useWorkflowStore = create<
     const { workflowSteps, inputImage } = get();
 
     // for each step, reprocess the image
-    const newSteps = [];
+    const newSteps: WorkflowStep[] = [];
 
     let inputToProcess = inputImage;
 
     for (const step of workflowSteps) {
-      const inputImage = inputToProcess;
-      if (!inputImage) {
+      if (!inputToProcess) {
         console.error("No image found with id", step.inputId);
         return;
       }
 
-      const imgData = inputImage.base64Data;
+      const imgData = inputToProcess.base64Data;
 
       const outputImage = await workflowOperations[step.operation](imgData);
 
@@ -77,6 +76,7 @@ export const useWorkflowStore = create<
             base64Data: outputImage,
           },
         ],
+        inputId: inputToProcess.id,
       });
 
       inputToProcess = newSteps[newSteps.length - 1].outputImages[0];
@@ -150,6 +150,9 @@ export const useWorkflowStore = create<
         base64Data: inputImage,
       },
     });
+
+    // reprocess all the steps
+    get().reprocessAll();
   },
 
   getImageById: (id) => {
