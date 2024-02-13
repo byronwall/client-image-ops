@@ -35,7 +35,7 @@ export const workflowOperations: Record<
           return;
         }
 
-        ctx.fillStyle = "black";
+        ctx.fillStyle = "white";
 
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
