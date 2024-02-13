@@ -10,18 +10,23 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@nextui-org/react": "^2.2.1",
-    "clsx": "^2.0.0",
+    "@radix-ui/react-popover": "^1.0.7",
+    "@radix-ui/react-slot": "^1.0.2",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.0",
     "framer-motion": "^10.16.4",
     "heic2any": "^0.0.4",
     "immer": "^10.0.3",
+    "lucide": "^0.330.0",
+    "lucide-react": "^0.330.0",
     "minio": "^7.1.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.50.0",
     "react-use": "^17.5.0",
     "reactflow": "^11.10.3",
-    "tailwind-merge": "^2.0.0",
+    "tailwind-merge": "^2.2.1",
+    "tailwindcss-animate": "^1.0.7",
     "zustand": "^4.5.0"
   },
   "devDependencies": {

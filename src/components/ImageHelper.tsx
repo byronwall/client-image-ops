@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Trash2 } from "lucide-react";
 
 import { useS3Storage } from "~/stores/useS3Storage";
 import {
@@ -7,7 +8,9 @@ import {
 } from "~/stores/useWorkflowStore";
 import { workflowOperationList } from "~/stores/WorkflowOperations";
 import { downloadBase64File } from "~/utils/buffers";
-import { cn } from "~/utils/classes";
+import { cn } from "~/lib/utils";
+
+import { Button } from "./ui/button";
 
 interface ImageHelperProps {
   workflowImage: WorkflowImage | undefined;
@@ -23,6 +26,7 @@ export function ImageHelper({ workflowImage }: ImageHelperProps) {
 
   const addWorkflowStep = useWorkflowStore((s) => s.addWorkflowStep);
   const isTerminal = useWorkflowStore((s) => s.isNodeTerminal);
+  const removeWorkflowStep = useWorkflowStore((s) => s.removeWorkflowStep);
 
   const base64 = workflowImage?.base64Data;
 
@@ -41,6 +45,8 @@ export function ImageHelper({ workflowImage }: ImageHelperProps) {
     setPresignedUrl(url);
   };
 
+  const isNotRoot = workflowImage.id !== "root";
+
   return (
     <div className="flex">
       <div className="p-2 flex flex-col">
@@ -55,6 +61,14 @@ export function ImageHelper({ workflowImage }: ImageHelperProps) {
           </button>
           {getCanSaveImage() && presignedUrl === undefined && (
             <button onClick={handleSaveImage}>get url</button>
+          )}
+          {isNotRoot && (
+            <Button
+              onClick={() => removeWorkflowStep(workflowImage.id)}
+              variant={"destructive"}
+            >
+              <Trash2 />
+            </Button>
           )}
         </div>
         <img
@@ -76,7 +90,7 @@ export function ImageHelper({ workflowImage }: ImageHelperProps) {
 
           <div className="flex flex-col self-center border border-slate-500 rounded-lg gap-2 p-2">
             {workflowOperationList.map((operation) => (
-              <button
+              <Button
                 key={operation}
                 onClick={() => {
                   addWorkflowStep({
@@ -86,7 +100,7 @@ export function ImageHelper({ workflowImage }: ImageHelperProps) {
                 }}
               >
                 {operation}
-              </button>
+              </Button>
             ))}
           </div>
         </>

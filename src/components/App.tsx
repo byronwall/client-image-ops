@@ -9,13 +9,13 @@ import ReactFlow, {
 } from "reactflow";
 import { useMeasure } from "react-use";
 
-import { cn } from "~/utils/classes";
 import { handleEventWithData } from "~/utils/events";
 import {
   type WorkflowStep,
   useWorkflowStore,
   type WorkflowImage,
 } from "~/stores/useWorkflowStore";
+import { cn } from "~/lib/utils";
 
 import CustomNode from "./CustomNode";
 
