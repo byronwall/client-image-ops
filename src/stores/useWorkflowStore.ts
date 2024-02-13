@@ -34,6 +34,10 @@ type WorkflowStoreActions = {
 
   getImageById: (id: string) => WorkflowImage | undefined;
   isNodeTerminal: (id: string) => boolean;
+
+  removeWorkflowStep: (id: string) => void;
+
+  reprocessAll: () => void;
 };
 
 function getDumbId() {
@@ -46,6 +50,81 @@ export const useWorkflowStore = create<
   inputImage: undefined,
   workflowSteps: [],
 
+  reprocessAll: async () => {
+    const { workflowSteps, inputImage } = get();
+
+    // for each step, reprocess the image
+    const newSteps: WorkflowStep[] = [];
+
+    let inputToProcess = inputImage;
+
+    for (const step of workflowSteps) {
+      if (!inputToProcess) {
+        console.error("No image found with id", step.inputId);
+        return;
+      }
+
+      const imgData = inputToProcess.base64Data;
+
+      const outputImage = await workflowOperations[step.operation](imgData);
+
+      newSteps.push({
+        ...step,
+        outputImages: [
+          {
+            id: getDumbId(),
+            base64Data: outputImage,
+          },
+        ],
+        inputId: inputToProcess.id,
+      });
+
+      inputToProcess = newSteps[newSteps.length - 1].outputImages[0];
+    }
+
+    set({
+      workflowSteps: await Promise.all(newSteps),
+    });
+  },
+
+  removeWorkflowStep: (id) => {
+    const { workflowSteps, reprocessAll } = get();
+
+    // id will be linked to the output image
+    // find the step that is going away and remove it, link the input to the remaining output
+
+    const newSteps: WorkflowStep[] = [];
+
+    let inputIdToUse = "root";
+
+    for (const step of workflowSteps) {
+      const outputContainsId = step.outputImages.find((img) => img.id === id);
+
+      if (outputContainsId) {
+        // remove the step
+        inputIdToUse = step.inputId;
+        continue;
+      }
+
+      // wire up that input to the next one
+      if (inputIdToUse) {
+        newSteps.push({
+          ...step,
+          inputId: inputIdToUse,
+        });
+        inputIdToUse = "";
+      } else {
+        newSteps.push(step);
+      }
+    }
+
+    set({
+      workflowSteps: newSteps,
+    });
+
+    reprocessAll();
+  },
+
   isNodeTerminal: (id) => {
     const { workflowSteps } = get();
 
@@ -54,9 +133,14 @@ export const useWorkflowStore = create<
       return true;
     }
 
-    return workflowSteps.some((step) =>
-      step.outputImages.some((outputImage) => outputImage.id === id)
-    );
+    // find the node and see if it has an output image
+    for (const step of workflowSteps) {
+      if (step.inputId === id) {
+        return step.outputImages.length === 0;
+      }
+    }
+
+    return true;
   },
 
   setInputImage: (inputImage) => {
@@ -66,6 +150,9 @@ export const useWorkflowStore = create<
         base64Data: inputImage,
       },
     });
+
+    // reprocess all the steps
+    get().reprocessAll();
   },
 
   getImageById: (id) => {

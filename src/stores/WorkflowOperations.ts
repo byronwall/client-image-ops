@@ -4,6 +4,7 @@ export const workflowOperationList = [
   "grayscale",
   "invert",
   "blur",
+  "add_border",
   "to_jpg",
   "to_png",
   "to_webp",
@@ -17,6 +18,33 @@ export const workflowOperations: Record<
   WorkflowOperations,
   WorkflowOperationAction
 > = {
+  add_border: async (input: Base64Image) =>
+    // add a 5px black border around the image - all sides
+    new Promise((resolve, reject) => {
+      const img = new Image();
+      img.src = input;
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width + 10;
+        canvas.height = img.height + 10;
+
+        const ctx = canvas.getContext("2d");
+
+        if (!ctx) {
+          reject("Could not get canvas context");
+          return;
+        }
+
+        ctx.fillStyle = "white";
+
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.drawImage(img, 5, 5);
+        resolve(canvas.toDataURL());
+      };
+      img.onerror = reject;
+    }),
+
   grayscale: async (input: Base64Image) =>
     new Promise((resolve, reject) => {
       const img = new Image();
