@@ -95,19 +95,17 @@ const App = () => {
 
   const handleDrop = async (ev: DragEvent) => {
     setIsLoading(true);
-
+    setFileError("");
     setIsDragActive(false);
-
-    const res = await handleEventWithData(ev as DragEvent);
-    if (!res) {
-      return;
+    try {
+      const res = await handleEventWithData(ev);
+      if (res) setBase64data(res.base64Data);
+      else setFileError("Drop a supported image.");
+    } catch {
+      setFileError("Could not open that image. Try another file.");
+    } finally {
+      setIsLoading(false);
     }
-
-    const { base64Data } = res;
-
-    setBase64data(base64Data);
-
-    setIsLoading(false);
   };
 
   const handlePaste = async (ev: any) => {
@@ -117,17 +115,16 @@ const App = () => {
     }
 
     setIsLoading(true);
-
-    const res = await handleEventWithData(ev as ClipboardEvent);
-    if (!res) {
-      return;
+    setFileError("");
+    try {
+      const res = await handleEventWithData(ev as ClipboardEvent);
+      if (res) setBase64data(res.base64Data);
+      else setFileError("Paste a supported image.");
+    } catch {
+      setFileError("Could not open that image. Try another file.");
+    } finally {
+      setIsLoading(false);
     }
-
-    const { base64Data } = res;
-
-    setBase64data(base64Data);
-
-    setIsLoading(false);
   };
 
   const [ref, { width, height }] = useMeasure();
