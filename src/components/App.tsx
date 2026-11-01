@@ -10,6 +10,8 @@ import ReactFlow, {
 import { useMeasure } from "react-use";
 
 import { handleEventWithData } from "~/utils/events";
+import { getImageDataFromDropData } from "~/utils/images";
+import { createDefaultDropData } from "~/models/models";
 import {
   type WorkflowStep,
   useWorkflowStore,
@@ -27,12 +29,30 @@ const nodeTypes = {
 
 const App = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [fileError, setFileError] = useState("");
 
   const [isDragActive, setIsDragActive] = useState(false);
 
   const inputImage = useWorkflowStore((s) => s.inputImage);
   const setBase64data = useWorkflowStore((s) => s.setInputImage);
   const workflowSteps = useWorkflowStore((s) => s.workflowSteps);
+
+  const chooseFile = async (file: File) => {
+    setFileError("");
+    setIsLoading(true);
+    try {
+      const result = await getImageDataFromDropData({
+        ...createDefaultDropData(),
+        files: [file],
+      });
+      if (result) setBase64data(result.base64Data);
+      else setFileError("Choose a supported image file.");
+    } catch {
+      setFileError("Could not open that image. Try another file.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const { reactFlowEdges, reactFlowNodes } = useMemo(() => {
     // convert the workflowSteps to a format that reactflow can understand
@@ -137,6 +157,27 @@ const App = () => {
       </div>
       <div className="flex flex-col items-center  min-h-screen gap-4  p-2">
         <h1 className="text-4xl font-bold">Image Converter</h1>
+
+        {!inputImage && (
+          <div className="text-center">
+            <p>Drop or paste an image here, or choose a file to get started.</p>
+            <label className="inline-block mt-2 cursor-pointer rounded border px-4 py-2">
+              Choose an image
+              <input
+                className="sr-only"
+                type="file"
+                accept="image/*,.heic"
+                onChange={(event) => {
+                  const file = event.currentTarget.files?.[0];
+                  if (file) void chooseFile(file);
+                  event.currentTarget.value = "";
+                }}
+              />
+            </label>
+            {isLoading && <p role="status">Opening image…</p>}
+            {fileError && <p role="alert">{fileError}</p>}
+          </div>
+        )}
 
         <div
           className="flex-1 self-stretch h-1  border rounded-lg"
